@@ -1,0 +1,25 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment variables & secrets
+.env
+*.local
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# Operating System files
+.DS_Store
+Thumbs.db
+
+# Audio storage cache (generated data can be reproduced with simulator)
+data/storage/*.wav
+!data/storage/.gitkeep
+data/sqlite_buffers/*.sqlite
+!data/sqlite_buffers/.gitkeep
+data/central_platform.db
+data/central_platform.db-journal
