@@ -58,11 +58,11 @@ class DeviceAuthenticator:
         if device_id not in self.public_keys:
             self.reload_keys()
             if device_id not in self.public_keys:
-                return False, f"Unknown device ID: {device_id}"
+                return False, f"Identificador de dispositivo desconocido: {device_id}"
 
         # 2. Device revocation check
         if self.device_statuses.get(device_id) == "REVOKED":
-            return False, f"Device {device_id} has been revoked by institutional administrator"
+            return False, f"El dispositivo {device_id} ha sido revocado por el administrador institucional"
 
         # 3. Timestamp replay prevention window
         try:
@@ -70,9 +70,9 @@ class DeviceAuthenticator:
             now_time = datetime.now(timezone.utc)
             skew = abs((now_time - req_time).total_seconds())
             if skew > max_clock_skew_sec:
-                return False, f"Request timestamp expired (skew: {skew:.1f}s > {max_clock_skew_sec}s)"
+                return False, f"Marca temporal de solicitud expirada (desfase: {skew:.1f}s > {max_clock_skew_sec}s)"
         except Exception:
-            return False, "Invalid ISO-8601 timestamp in X-Timestamp"
+            return False, "Marca temporal ISO-8601 no válida en cabecera X-Timestamp"
 
         # 4. Signature verification over SHA-256(payload) + timestamp
         try:
@@ -81,8 +81,8 @@ class DeviceAuthenticator:
             signature_bytes = bytes.fromhex(signature_hex)
             pub_key = self.public_keys[device_id]
             pub_key.verify(signature_bytes, message_to_verify)
-            return True, "Signature valid"
+            return True, "Firma válida"
         except InvalidSignature:
-            return False, "Invalid Ed25519 signature"
+            return False, "Firma Ed25519 no válida"
         except Exception as e:
-            return False, f"Cryptographic verification error: {str(e)}"
+            return False, f"Error en verificación criptográfica: {str(e)}"

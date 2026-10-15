@@ -37,7 +37,7 @@ def sync_device(dev, api_url: str):
         try:
             res = requests.post(f"{api_url}/api/v1/ingest/authorize", data=auth_body_bytes, headers=headers, timeout=5)
             if res.status_code != 200:
-                print(f"[!] Authorization failed for {dev.device_id}: {res.status_code} {res.text}")
+                print(f"[!] Autorización fallida para {dev.device_id}: {res.status_code} {res.text}")
                 continue
             auth_data = res.json()
             clip_id = auth_data["clip_id"]
@@ -50,7 +50,7 @@ def sync_device(dev, api_url: str):
             storage_target = f"{api_url}{upload_url}" if upload_url.startswith("/") else upload_url
             upload_res = requests.put(storage_target, data=clip_bytes, headers={"Content-Type": "audio/wav"}, timeout=10)
             if upload_res.status_code != 200:
-                print(f"[!] Clip upload failed for {dev.device_id}: {upload_res.status_code}")
+                print(f"[!] Carga del clip fallida para {dev.device_id}: {upload_res.status_code}")
                 continue
 
             # Step 3: Complete ingestion
@@ -75,10 +75,10 @@ def sync_device(dev, api_url: str):
                 dev.mark_event_synced(evt["event_uuid"])
                 synced_count += 1
             else:
-                print(f"[!] Ingest complete failed: {comp_res.status_code} {comp_res.text}")
+                print(f"[!] Confirmación de ingesta fallida: {comp_res.status_code} {comp_res.text}")
 
         except Exception as e:
-            print(f"[!] Network error syncing {dev.device_id}: {e}")
+            print(f"[!] Error de red al sincronizar {dev.device_id}: {e}")
 
     # Send periodic telemetry
     telem = dev.record_telemetry()
@@ -92,15 +92,15 @@ def sync_device(dev, api_url: str):
 
 
 def sync_all_swarm(api_url: str = "http://127.0.0.1:8000"):
-    print(f"[*] Starting Swarm Synchronization to {api_url}...")
+    print(f"[*] Iniciando sincronización del enjambre hacia {api_url}...")
     swarm = SwarmManager(data_dir="data")
     total_synced = 0
     for dev in swarm.devices:
         count = sync_device(dev, api_url)
         if count > 0:
-            print(f"[+] Device {dev.device_id} ({dev.reserve_slug}) synced {count} detection(s).")
+            print(f"[+] Dispositivo {dev.device_id} ({dev.reserve_slug}) sincronizó {count} detección(es).")
             total_synced += count
-    print(f"[✓] Swarm sync complete. Total clips uploaded: {total_synced}")
+    print(f"[✓] Sincronización del enjambre completada. Total de clips subidos: {total_synced}")
 
 
 if __name__ == "__main__":

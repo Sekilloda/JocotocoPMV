@@ -92,6 +92,31 @@ class DatabaseClient:
             """)
             conn.commit()
 
+        # Seed local devices registry if present
+        reg_file = os.path.join(self.data_dir, "devices.json")
+        if os.path.exists(reg_file):
+            import json
+            try:
+                with open(reg_file, "r", encoding="utf-8") as f:
+                    devs = json.load(f)
+                with sqlite3.connect(self.sqlite_path) as conn:
+                    for d in devs:
+                        conn.execute("""
+                            INSERT OR IGNORE INTO devices (
+                                id, organization_id, project_id, name,
+                                latitude, longitude, elevation_m, status
+                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                        """, (
+                            d["id"], "a0000000-0000-0000-0000-000000000001",
+                            "b0000000-0000-0000-0000-000000000001",
+                            d.get("name", d["id"]), d.get("latitude", 0.0),
+                            d.get("longitude", 0.0), d.get("elevation_m", 0.0),
+                            d.get("status", "ACTIVE")
+                        ))
+                    conn.commit()
+            except Exception:
+                pass
+
     def get_pg_connection(self, tenant_id: Optional[str] = None):
         """Creates a PostgreSQL connection and sets the tenant RLS context if specified."""
         if not self.is_postgres:
@@ -206,7 +231,7 @@ class DatabaseClient:
                 conn.close()
                 return True
             except Exception as e:
-                print(f"[!] PostgreSQL telemetry error: {e}")
+                print(f"[!] Error de telemetría en PostgreSQL: {e}")
                 return False
         else:
             with sqlite3.connect(self.sqlite_path) as conn:

@@ -18,7 +18,10 @@ from database.client import DatabaseClient
 app = Flask(__name__)
 
 
-DATA_DIR = os.getenv("DATA_DIR", "data")
+REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+DATA_DIR = os.getenv("DATA_DIR", os.path.join(REPO_ROOT, "data"))
+if not os.path.isabs(DATA_DIR):
+    DATA_DIR = os.path.abspath(os.path.join(REPO_ROOT, DATA_DIR))
 STORAGE_DIR = os.path.join(DATA_DIR, "storage")
 os.makedirs(STORAGE_DIR, exist_ok=True)
 
@@ -55,12 +58,12 @@ def ingest_authorize():
     sig = request.headers.get("X-Signature")
     
     if not all([dev_id, ts, sig]):
-        return jsonify({"error": "Missing required Ed25519 signature headers"}), 401
+        return jsonify({"error": "Faltan las cabeceras de firma Ed25519 obligatorias"}), 401
 
     payload_bytes = request.get_data()
     is_valid, msg = auth.verify_request(dev_id, ts, sig, payload_bytes)
     if not is_valid:
-        return jsonify({"error": f"Cryptographic verification rejected: {msg}"}), 403
+        return jsonify({"error": f"Verificación criptográfica rechazada: {msg}"}), 403
 
     body = request.get_json(silent=True) or {}
     clip_id = str(uuid.uuid4())
@@ -84,7 +87,7 @@ def storage_upload(clip_id):
     """
     audio_data = request.get_data()
     if not audio_data:
-        return jsonify({"error": "Empty audio payload"}), 400
+        return jsonify({"error": "Cuerpo de audio vacío"}), 400
 
     sha256 = hashlib.sha256(audio_data).hexdigest()
     clip_path = os.path.join(STORAGE_DIR, f"{clip_id}.wav")
@@ -111,18 +114,18 @@ def ingest_complete():
     idempotency_key = request.headers.get("Idempotency-Key")
 
     if not all([dev_id, ts, sig, idempotency_key]):
-        return jsonify({"error": "Missing required headers or Idempotency-Key"}), 400
+        return jsonify({"error": "Faltan cabeceras obligatorias o la cabecera Idempotency-Key"}), 400
 
     payload_bytes = request.get_data()
     is_valid, msg = auth.verify_request(dev_id, ts, sig, payload_bytes)
     if not is_valid:
-        return jsonify({"error": f"Cryptographic verification rejected: {msg}"}), 403
+        return jsonify({"error": f"Verificación criptográfica rechazada: {msg}"}), 403
 
     # Idempotency check (Proposal Section 2.2 C)
     if idempotency_key in IDEMPOTENCY_STORE:
         return jsonify({
             "status": "acknowledged",
-            "message": "Duplicate request recognized via Idempotency-Key; already committed",
+            "message": "Solicitud duplicada reconocida mediante Idempotency-Key; ya confirmada",
             "event_id": IDEMPOTENCY_STORE[idempotency_key]
         }), 200
 
@@ -139,7 +142,7 @@ def ingest_complete():
             "device_id": dev_id,
             "storage_uri": f"r2://jocotoco-media/{dev_id}/{clip_id}.wav",
             "file_size_bytes": size,
-            "sha256_checksum": data.get("clip_sha256", "unknown"),
+            "sha256_checksum": data.get("clip_sha256", "desconocido"),
             "duration_seconds": data.get("duration_sec", 2.267)
         }
 
@@ -148,8 +151,8 @@ def ingest_complete():
         "device_id": dev_id,
         "idempotency_key": idempotency_key,
         "timestamp": data.get("timestamp", datetime.now(timezone.utc).isoformat()),
-        "species_scientific_name": data.get("species_scientific", "Unknown"),
-        "species_common_name": data.get("species_common", "Unknown"),
+        "species_scientific_name": data.get("species_scientific", "Desconocida"),
+        "species_common_name": data.get("species_common", "Desconocida"),
         "confidence": data.get("confidence", 0.90),
         "frequency_min_hz": data.get("freq_min_hz", 1000),
         "frequency_max_hz": data.get("freq_max_hz", 4000)
@@ -174,12 +177,12 @@ def telemetry():
     sig = request.headers.get("X-Signature")
 
     if not all([dev_id, ts, sig]):
-        return jsonify({"error": "Missing signature headers"}), 400
+        return jsonify({"error": "Faltan cabeceras de firma"}), 400
 
     payload_bytes = request.get_data()
     is_valid, msg = auth.verify_request(dev_id, ts, sig, payload_bytes)
     if not is_valid:
-        return jsonify({"error": f"Rejected: {msg}"}), 403
+        return jsonify({"error": f"Rechazado: {msg}"}), 403
 
     item = request.get_json(silent=True) or {}
     db.record_telemetry(item)
@@ -208,7 +211,7 @@ def ota_manifest():
 
     return jsonify({
         "model_id": "m-perch2-joco-v2.1",
-        "name": "Google Perch2 Cloud Forest Custom Classifier",
+        "name": "Clasificador personalizado Google Perch2 para bosque nublado",
         "version": "2.1.0",
         "target_species": [
             "Grallaria ridgelyi", "Pyrrhura orcesi", "Eriocnemis nigrivestis", "Neomorphus radiolosus"
@@ -218,7 +221,7 @@ def ota_manifest():
         "total_chunks": total_chunks,
         "chunks": chunks,
         "master_sha256": "8f3b29c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9",
-        "signing_authority": "Fundación de Conservación Jocotoco — Conservation AI Unit"
+        "signing_authority": "Fundación de Conservación Jocotoco — Unidad de IA para la Conservación"
     })
 
 

@@ -24,34 +24,34 @@ from simulator.pink_noise import generate_pink_noise_wav
 # Bioacoustic targets mapped to Jocotoco reserves
 RESERVE_SPECIES = {
     "buenaventura": [
-        {"scientific": "Pyrrhura orcesi", "common": "El Oro Parakeet", "freq_range": [2800, 6200]},
-        {"scientific": "Grallaria ridgelyi", "common": "Jocotoco Antpitta", "freq_range": [950, 1850]},
-        {"scientific": "Phaethornis yaruqui", "common": "White-whiskered Hermit", "freq_range": [4200, 8500]}
+        {"scientific": "Pyrrhura orcesi", "common": "Perico de El Oro", "freq_range": [2800, 6200]},
+        {"scientific": "Grallaria ridgelyi", "common": "Grallaria de Jocotoco", "freq_range": [950, 1850]},
+        {"scientific": "Phaethornis yaruqui", "common": "Ermitaño de Yaruquí", "freq_range": [4200, 8500]}
     ],
     "tapichalaca": [
-        {"scientific": "Grallaria ridgelyi", "common": "Jocotoco Antpitta", "freq_range": [900, 1800]},
-        {"scientific": "Heliangelus regalis", "common": "Royal Sunangel", "freq_range": [5000, 9200]},
-        {"scientific": "Scytalopus latebricola", "common": "Brown-rumped Tapaculo", "freq_range": [1400, 3100]}
+        {"scientific": "Grallaria ridgelyi", "common": "Grallaria de Jocotoco", "freq_range": [900, 1800]},
+        {"scientific": "Heliangelus regalis", "common": "Solángel Real", "freq_range": [5000, 9200]},
+        {"scientific": "Scytalopus latebricola", "common": "Tapaculo Culipardo", "freq_range": [1400, 3100]}
     ],
     "yanacocha": [
-        {"scientific": "Eriocnemis nigrivestis", "common": "Black-breasted Puffleg", "freq_range": [4800, 9500]},
-        {"scientific": "Oreomanes fraseri", "common": "Giant Conebill", "freq_range": [2200, 4800]},
-        {"scientific": "Anairetes alpinus", "common": "Ash-breasted Tit-Tyrant", "freq_range": [3000, 6100]}
+        {"scientific": "Eriocnemis nigrivestis", "common": "Zamarrito Pechinegro", "freq_range": [4800, 9500]},
+        {"scientific": "Oreomanes fraseri", "common": "Conirrostro Gigante", "freq_range": [2200, 4800]},
+        {"scientific": "Anairetes alpinus", "common": "Torito Pechicenizo", "freq_range": [3000, 6100]}
     ],
     "canande": [
-        {"scientific": "Neomorphus radiolosus", "common": "Banded Ground-Cuckoo", "freq_range": [650, 1400]},
-        {"scientific": "Ara ambiguus", "common": "Great Green Macaw", "freq_range": [1100, 4200]},
-        {"scientific": "Cephalopterus penduliger", "common": "Long-wattled Umbrellabird", "freq_range": [400, 950]}
+        {"scientific": "Neomorphus radiolosus", "common": "Cuco Terrestre Franjeado", "freq_range": [650, 1400]},
+        {"scientific": "Ara ambiguus", "common": "Guacamayo Verde Mayor", "freq_range": [1100, 4200]},
+        {"scientific": "Cephalopterus penduliger", "common": "Pájaro Paraguas Longipéndulo", "freq_range": [400, 950]}
     ],
     "narupa": [
-        {"scientific": "Setophaga cerulea", "common": "Cerulean Warbler", "freq_range": [3800, 7800]},
-        {"scientific": "Ara militaris", "common": "Military Macaw", "freq_range": [1200, 4400]},
-        {"scientific": "Aburria aburri", "common": "Wattled Guan", "freq_range": [800, 2100]}
+        {"scientific": "Setophaga cerulea", "common": "Reinita Cerúlea", "freq_range": [3800, 7800]},
+        {"scientific": "Ara militaris", "common": "Guacamayo Militar", "freq_range": [1200, 4400]},
+        {"scientific": "Aburria aburri", "common": "Pava Carunculada", "freq_range": [800, 2100]}
     ],
     "antisanilla": [
-        {"scientific": "Vultur gryphus", "common": "Andean Condor", "freq_range": [350, 1100]},
-        {"scientific": "Oreotrochilus chimborazo", "common": "Ecuadorian Hillstar", "freq_range": [4500, 9200]},
-        {"scientific": "Cinclodes excelsior", "common": "Stout-billed Cinclodes", "freq_range": [1800, 3900]}
+        {"scientific": "Vultur gryphus", "common": "Cóndor Andino", "freq_range": [350, 1100]},
+        {"scientific": "Oreotrochilus chimborazo", "common": "Estrella Ecuatoriana", "freq_range": [4500, 9200]},
+        {"scientific": "Cinclodes excelsior", "common": "Remolinera Picogruesa", "freq_range": [1800, 3900]}
     ]
 }
 

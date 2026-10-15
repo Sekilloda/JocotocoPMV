@@ -28,7 +28,7 @@ from api.auth import DeviceAuthenticator
 
 def run_tests():
     print("=" * 70)
-    print("   AUTOMATED ACCEPTANCE TEST SUITE — JOCOTOCO SMART MONITOR POC")
+    print("   SUITE AUTOMATIZADA DE PRUEBAS DE ACEPTACIÓN — POC MONITOR JOCOTOCO")
     print("=" * 70)
     passed = 0
     total = 5
@@ -36,7 +36,7 @@ def run_tests():
     # -------------------------------------------------------------
     # TEST 1: Exact 100 kB Pink Noise Audio Generation
     # -------------------------------------------------------------
-    print("\n[TEST 1] Verifying 100 kB Pink Noise Audio Compliance...")
+    print("\n[PRUEBA 1] Verificando cumplimiento de estándar de audio de 100 kB...")
     swarm = SwarmManager(data_dir="data", target_audio_bytes=100000)
     events = swarm.generate_swarm_detections(clips_per_device=1)
     
@@ -45,20 +45,20 @@ def run_tests():
         actual_size = os.path.getsize(evt["clip_path"])
         if actual_size != 100000:
             all_exact_size = False
-            print(f"    [FAIL] Device {evt['device_id']} generated {actual_size} bytes, expected 100000 bytes.")
+            print(f"    [FALLO] Dispositivo {evt['device_id']} generó {actual_size} bytes, se esperaban 100000 bytes.")
             break
             
     if all_exact_size:
-        print(f"    [PASS] All {len(events)} audio files generated are exactly 100,000 bytes (100 kB).")
-        print(f"           Sample SHA-256: {events[0]['clip_sha256']}")
+        print(f"    [ÉXITO] Los {len(events)} archivos de audio generados tienen exactamente 100,000 bytes (100 kB).")
+        print(f"            Muestra SHA-256: {events[0]['clip_sha256']}")
         passed += 1
     else:
-        print("    [FAIL] Audio size mismatch.")
+        print("    [FALLO] Discrepancia en el tamaño de audio.")
 
     # -------------------------------------------------------------
     # TEST 2: Ed25519 Cryptographic Signature Verification
     # -------------------------------------------------------------
-    print("\n[TEST 2] Verifying Ed25519 Asymmetric Authentication (Proposal 2.2 B)...")
+    print("\n[PRUEBA 2] Verificando autenticación asimétrica Ed25519 (Propuesta 2.2 B)...")
     auth = DeviceAuthenticator(devices_registry_path="data/devices.json")
     dev = swarm.devices[0]
 
@@ -69,46 +69,46 @@ def run_tests():
 
     # 2A: Valid signature
     is_valid, msg = auth.verify_request(dev.device_id, now_iso, sig, payload_bytes)
-    assert is_valid, f"Valid signature was rejected: {msg}"
+    assert is_valid, f"Firma válida fue rechazada: {msg}"
 
     # 2B: Tampered payload
-    tampered_bytes = json.dumps({"species": "Altered Species", "confidence": 0.1}, sort_keys=True).encode("utf-8")
+    tampered_bytes = json.dumps({"species": "Especie Alterada", "confidence": 0.1}, sort_keys=True).encode("utf-8")
     tampered_valid, tamper_msg = auth.verify_request(dev.device_id, now_iso, sig, tampered_bytes)
-    assert not tampered_valid, "Tampered payload was falsely accepted!"
+    assert not tampered_valid, "¡Un payload alterado fue aceptado indebidamente!"
 
     # 2C: Expired timestamp (> 120s replay window)
     expired_ts = "2020-01-01T00:00:00+00:00"
     exp_sig = dev.sign_payload(payload_bytes, expired_ts)
     exp_valid, exp_msg = auth.verify_request(dev.device_id, expired_ts, exp_sig, payload_bytes)
-    assert not exp_valid, "Expired replay timestamp was falsely accepted!"
+    assert not exp_valid, "¡Una marca temporal vencida fue aceptada indebidamente!"
 
-    print(f"    [PASS] Legitimate signature verified: OK")
-    print(f"    [PASS] Tampered payload alteration rejected: {tamper_msg}")
-    print(f"    [PASS] Replay attack (timestamp skew) rejected: {exp_msg}")
+    print(f"    [ÉXITO] Firma legítima verificada: {msg}")
+    print(f"    [ÉXITO] Alteración no autorizada rechazada: {tamper_msg}")
+    print(f"    [ÉXITO] Ataque de repetición (desfase temporal) rechazado: {exp_msg}")
     passed += 1
 
     # -------------------------------------------------------------
     # TEST 3: Local SQLite Queue & Offline Resilience (Proposal 3.1)
     # -------------------------------------------------------------
-    print("\n[TEST 3] Verifying Local Transactional SQLite Buffer (Offline Storage)...")
+    print("\n[PRUEBA 3] Verificando buffer local transaccional SQLite (Resiliencia sin conexión)...")
     queued = dev.get_queued_events(limit=5)
     if len(queued) > 0:
         evt_uuid = queued[0]["event_uuid"]
         dev.mark_event_synced(evt_uuid)
         recheck = [e for e in dev.get_queued_events(limit=5) if e["event_uuid"] == evt_uuid]
         if len(recheck) == 0:
-            print(f"    [PASS] Event {evt_uuid[:8]} transitioned from QUEUED -> ACKNOWLEDGED in SQLite.")
+            print(f"    [ÉXITO] Evento {evt_uuid[:8]} transicionó de QUEUED -> ACKNOWLEDGED en SQLite.")
             passed += 1
         else:
-            print("    [FAIL] State update failed.")
+            print("    [FALLO] Actualización de estado fallida.")
     else:
-        print("    [PASS] SQLite schema and connection verified.")
+        print("    [ÉXITO] Esquema y conexión SQLite verificados.")
         passed += 1
 
     # -------------------------------------------------------------
     # TEST 4: Idempotency Key Duplicate Defense (Proposal 2.2 C)
     # -------------------------------------------------------------
-    print("\n[TEST 4] Verifying Guaranteed Idempotency (Zero Duplicates on Retries)...")
+    print("\n[PRUEBA 4] Verificando idempotencia garantizada (Cero duplicados en reintentos)...")
     idempotency_map = {}
     test_idempotency_key = str(uuid.uuid4())
     event_id = str(uuid.uuid4())
@@ -119,28 +119,28 @@ def run_tests():
     # Simulated network timeout retry with identical key
     is_duplicate = test_idempotency_key in idempotency_map
     if is_duplicate:
-        print(f"    [PASS] Duplicate retry detected via Idempotency-Key: {test_idempotency_key[:8]}...")
-        print(f"           Acknowledged original event {event_id[:8]} without duplicate row insertion.")
+        print(f"    [ÉXITO] Reintento duplicado detectado mediante Idempotency-Key: {test_idempotency_key[:8]}...")
+        print(f"            Reconocido evento original {event_id[:8]} sin insertar filas duplicadas.")
         passed += 1
     else:
-        print("    [FAIL] Idempotency detection failed.")
+        print("    [FALLO] Detección de idempotencia fallida.")
 
     # -------------------------------------------------------------
     # TEST 5: Resilient OTA Manifest (Proposal Section 3)
     # -------------------------------------------------------------
-    print("\n[TEST 5] Verifying Resilient OTA Model Update Manifest...")
+    print("\n[PRUEBA 5] Verificando manifiesto de actualización OTA resiliente...")
     from api.server import ota_manifest
     with app_context():
         res = ota_manifest()
         manifest_data = res[0].get_json() if isinstance(res, tuple) else res.get_json()
         assert manifest_data["total_chunks"] == 5
         assert len(manifest_data["chunks"]) == 5
-        print(f"    [PASS] OTA Manifest for {manifest_data['name']} (v{manifest_data['version']})")
-        print(f"           Total size: {manifest_data['total_size_bytes'] / (1024*1024):.1f} MB, {manifest_data['total_chunks']} chunks of 1 MB each.")
+        print(f"    [ÉXITO] Manifiesto OTA para {manifest_data['name']} (v{manifest_data['version']})")
+        print(f"            Tamaño total: {manifest_data['total_size_bytes'] / (1024*1024):.1f} MB, {manifest_data['total_chunks']} bloques de 1 MB cada uno.")
         passed += 1
 
     print("\n" + "=" * 70)
-    print(f"   TEST SUMMARY: {passed} / {total} TESTS PASSED (100% SUCCESS)")
+    print(f"   RESUMEN DE PRUEBAS: {passed} / {total} PRUEBAS APROBADAS (100% DE ÉXITO)")
     print("=" * 70)
 
 

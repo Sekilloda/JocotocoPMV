@@ -15,7 +15,7 @@ Esta Prueba de Concepto (PoC) implementa una maqueta con los pilares técnicos f
 
 2. **Identidad criptográfica asimétrica:**
    - Parche que evita la limitación de terminación mTLS en balanceadores y proxies inversos comerciales mediante firmas digitales aplicadas directamente en la capa de aplicación sobre HTTPS estándar.
-   - Cabeceras de autenticación: `X-Device-Id`, `X-Timestamp` y `X-Signature` calculada sobre llave + llave SHA-256, con ventana estricta anti-repetición de 120 segundos.
+   - Cabeceras de autenticación: `X-Device-Id`, `X-Timestamp` y `X-Signature` calculada sobre $\text{SHA-256}(\text{payload}) + \text{timestamp}$, con ventana estricta anti-repetición de 120 segundos.
 
 3. **Capa de datos:**
    - Esquemas SQL versionados con políticas de Row-Level Security gobernadas por la variable de sesión `app.current_tenant_id`.
@@ -26,7 +26,7 @@ Esta Prueba de Concepto (PoC) implementa una maqueta con los pilares técnicos f
 
 5. **Despliegue Contenerizado Listo para Railway:**
    - Orquestación mediante `Dockerfile` multi-etapa, `railway.json` y `Procfile`.
-   - Panel de control operativo integrado con mapa satelital Leaflet, reproducción de audio bioacústico y telemetría de flota en tiempo real.
+   - Endpoint raíz de estado y descubrimiento de servicios JSON (`/`), chequeo de salud en `/healthz` y telemetría de flota en tiempo real.
 
 ---
 
@@ -35,7 +35,7 @@ Esta Prueba de Concepto (PoC) implementa una maqueta con los pilares técnicos f
 El PoC modela los componentes físicos y operacionales de la red:
 
 * **Telemetría:**
-  - Voltaje y nivel de batería (10% a 100%), temperatura del procesador (°C), espacio ocupado en la tarjeta SD (%) y potencia de señal celular (RSSI en dBm).
+  - Voltaje y nivel de batería (10% a 100%), generación solar fotovoltaica (mW), temperatura del procesador (°C), espacio ocupado en la tarjeta SD (%) y potencia de señal celular (RSSI en dBm). Estas señales son sólo representativas, no pretenden reflejar las generadas por el equipo.
 * **Audio Bioacústico Canónico de 100 kB:**
   - Síntesis de ruido rosa con densidad espectral $1/f$ ($3\text{ dB/octava}$ de atenuación), simulando eventos de detección.
 * **Condiciones adversas:**
@@ -43,21 +43,21 @@ El PoC modela los componentes físicos y operacionales de la red:
 
 ---
 
-## 5. Diferencias con el piloto operativo
+## 3. Diferencias con el piloto operativo
 
 Para evolucionar este demostrador funcional hacia el piloto operativo desplegado:
 
 1. Hace falta reescribir el agente de control en Rust y empaquetarlo en un daemon como servicio del sistema bajo `systemd` con reinicio automático.
 2. Es necesario integrar el sistema con hardware real.
 3. Diseño de la arquitectura de almacenamiento de datos en Cloudflare R2. Esto implica la configuración de buckets y emisión de URLs prefirmadas reales con expiración temporal.
-4. Esta prueba de concepto no incluye el dashboard. Para crearlo, es necesario diseñar la interfaz con control de acceso por roles, descarga y reproducción de archivos.
+4. Esta prueba de concepto no incluye el dashboard. Para crearlo, es necesario diseñar la interfaz con control de acceso por roles, visualización de espectrogramas acústicos, descarga y reproducción de archivos.
 5. Configuración del respaldo en NAS. Establecimiento de tareas programadas con `rclone` y respaldos cifrados de PostgreSQL hacia el almacenamiento físico de la institución.
 
 El backend simulado en este demostrador fue diseñado enteramente en Python.
 
 ---
 
-## 6. Estructura del Repositorio
+## 4. Estructura del Repositorio
 
 ```
 smart-monitor-poc/
@@ -68,7 +68,7 @@ smart-monitor-poc/
 ├── requirements.txt               # Dependencias ligeras de ejecución
 ├── .env.example                   # Plantilla de variables de entorno
 ├── api/
-│   ├── server.py                  # Servidor de ingesta, almacenamiento y OTA
+│   ├── server.py                  # Servidor de ingesta, almacenamiento, OTA y endpoints de flota
 │   └── auth.py                    # Middleware de verificación criptográfica Ed25519
 ├── simulator/
 │   ├── pink_noise.py              # Generador de ruido rosa WAV de 100 kB en Python
@@ -81,6 +81,8 @@ smart-monitor-poc/
 │   └── migrations/
 │       ├── 001_initial_schema.sql # DDL relacional con PostGIS y RLS portable
 │       └── 002_seed_swarm.sql     # Semillado de 6 reservas y 20 dispositivos con GPS
+├── docs/
+│   └── Explicativo_PoC_Fundacion_Jocotoco.md # Memoria técnica explicativa integral de arquitectura
 ├── scripts/
 │   ├── setup_supabase.py          # Script de migración y validación de RLS en Supabase
 │   └── test_acceptance.py         # Suite automatizada de pruebas de aceptación de los TdR
@@ -92,83 +94,65 @@ smart-monitor-poc/
 
 ---
 
-## 7. Guía de Inicio Rápido (Ejecución Local)
+## 5. Guía de instalación y uso
 
 ### Paso 1: Instalación de Dependencias
 ```bash
 pip install -r requirements.txt
 ```
 
-### Paso 2: Generar Clips de Ruido Rosa de 100 kB para el Enjambre
+### Paso 2: Generar clips de audio
 ```bash
 python3 -m simulator.run_swarm --clips 1 --bytes 100000
 ```
 *Genera 20 clips de audio WAV de exactamente 100,000 bytes (2.0 MB en total) y 20 colas SQLite locales con sus claves criptográficas.*
 
-### Paso 3: Ejecutar la Suite Automatizada de Pruebas de Aceptación
+### Paso 3: Ejecutar pruebas de aceptación
 ```bash
 python3 scripts/test_acceptance.py
 ```
-*Valida tamaño exacto de audio, verificación Ed25519, rechazo de alteraciones, defensa anti-repetición, transiciones en SQLite, idempotencia y manifiesto OTA (5/5 pruebas superadas).*
+*Valida tamaño de audio (por ahora exacto, para el piloto será un check con una cota mínima), verificación Ed25519, rechazo de alteraciones, defensa anti-repetición, transiciones en SQLite, idempotencia y manifiesto OTA.*
 
-### Paso 4: Iniciar la API de Ingesta y Control
+### Paso 4: Iniciar la API
 ```bash
 python3 -m api.server
 ```
-Consulte **`http://localhost:8000`** o **`http://localhost:8000/healthz`** para verificar el estado de los servicios y los endpoints disponibles de la API.
+Abra en su navegador **`http://localhost:8000`** para verificar el estado de los servicios.
 
-
-### Paso 5: Simular la Sincronización del Enjambre
+### Paso 5: Simular la sincronización del enjambre
 En una terminal paralela:
 ```bash
 python3 simulator/sync_client.py http://127.0.0.1:8000
 ```
-*Transmite las detecciones encoladas hacia el servidor, validando firmas Ed25519 y registrando los eventos de forma concurrente.*
+*Transmite las detecciones hacia el servidor, validando firmas Ed25519 y registrando los eventos de forma concurrente.*
 
 ---
 
-## 8. Conexión con Supabase
+## 6. Conexión con Supabase
 
 Para enlazar este PoC directamente con una instancia de Supabase PostgreSQL:
 
-### Método A: Configuración Automatizada por CLI
-1. En el panel de Supabase, ingrese a **Project Settings** $\longrightarrow$ **Database** $\longrightarrow$ **Connection String (URI)**.
+1. En el panel de Supabase, ingrese a **Project Settings**, **Database**, **Connection String (URI)**.
 2. Ejecute el script de inicialización:
 ```bash
 python3 scripts/setup_supabase.py --db-url "postgresql://postgres:[PASSWORD]@db.[PROJECT_REF].supabase.co:5432/postgres"
 ```
 El script realiza automáticamente:
 - Activación de la extensión espacial `postgis`.
-- Creación de tablas relacionales y políticas portables de *Row-Level Security* (RLS).
-- Inserción de las 6 reservas y los 20 monitores con coordenadas geográficas reales.
+- Creación de tablas.
+- Inserción de las 6 reservas y los 20 monitores con coordenadas geográficas.
 - Registro de las claves públicas Ed25519 generadas.
 - Validación de aislamiento multi-inquilino mediante consultas de prueba.
 
-### Método B: Editor SQL de Supabase (Copia y Pega)
-1. Abra `database/migrations/001_initial_schema.sql` y ejecútelo en el **SQL Editor** de Supabase.
-2. Abra `database/migrations/002_seed_swarm.sql` y ejecútelo en el **SQL Editor** de Supabase.
-
 ---
 
-## 9. Despliegue en Railway
+## 7. Despliegue en Railway
 
 Para desplegar este demostrador en Railway sin administración de servidores:
 
 1. Inicie sesión en [Railway.app](https://railway.app).
-2. Seleccione **New Project** $\longrightarrow$ **Deploy from GitHub repo** (o utilice la CLI de Railway).
+2. Seleccione **New Project**, **Deploy from GitHub repo** (o utilice la CLI de Railway).
 3. En las variables de entorno del proyecto (*Variables*), configure:
    - `DATABASE_URL`: Cadena de conexión de Supabase (utilizar URI del Session Pooler en el puerto `5432` o Transaction Pooler en el puerto `6543`).
    - `PORT`: `8000` (inyectado automáticamente por Railway).
 4. Railway detectará automáticamente el archivo `railway.json` y el `Dockerfile`, construirá la imagen, generará el enjambre y expondrá el servicio bajo HTTPS público con chequeo de salud en `/healthz`.
-
----
-
-## 10. Mapeo de Pruebas de Aceptación de los Términos de Referencia
-
-| # | Requisito de los TdR | Implementación y Validación en la Prueba de Concepto |
-| :---: | :--- | :--- |
-| **1** | **Interrupción y Reanudación de Ingesta** | Los monitores edge almacenan eventos en SQLite local (`events_buffer`). Si la conexión se interrumpe, los clips permanecen en cola y se reanudan sin pérdida de datos ni registros duplicados (`simulator/device.py`, `scripts/test_acceptance.py`). |
-| **2** | **Aislamiento Multi-Inquilino (RLS)** | Políticas relacionales gobernadas por `app.current_tenant_id` en el motor de base de datos, garantizando aislamiento estricto verificado en `scripts/setup_supabase.py`. |
-| **3** | **Actualización OTA Reanudable de Modelos** | Manifiesto estructurado con partición por bloques de 1 MB y hashes SHA-256 (`/api/v1/ota/manifest`), validado en la prueba de aceptación 5. |
-| **4** | **Autenticación Criptográfica de Hardware** | Firmas asimétricas Ed25519 sobre $\text{SHA-256}(\text{payload}) + \text{timestamp}$, con rechazo de alteraciones y defensa contra repetición (`api/auth.py`). |
-| **5** | **Estándar de Audio Bioacústico de 100 kB** | Clips WAV sintetizados con pendiente $1/f$ (ruido rosa) de exactamente 100,000 bytes y cabecera RIFF canónica de 44 bytes (`simulator/pink_noise.py`). |

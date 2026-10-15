@@ -27,52 +27,52 @@ except ImportError:
 
 def run_migrations(db_url: str):
     print("=" * 70)
-    print("   SUPABASE POSTGRESQL INITIALIZATION — FUNDACIÓN JOCOTOCO")
+    print("   INICIALIZACIÓN DE SUPABASE POSTGRESQL — FUNDACIÓN JOCOTOCO")
     print("=" * 70)
-    print(f"[*] Connecting to database at {db_url.split('@')[-1]}...")
+    print(f"[*] Conectando a la base de datos en {db_url.split('@')[-1]}...")
     
     try:
         conn = psycopg2.connect(db_url)
         conn.autocommit = True
     except Exception as e:
-        print(f"[x] Connection failed: {e}")
+        print(f"[x] Error de conexión: {e}")
         return False
 
-    print("[+] Successfully connected to Supabase PostgreSQL!")
+    print("[+] ¡Conexión exitosa a Supabase PostgreSQL!")
 
     # Check PostGIS
     with conn.cursor() as cur:
         cur.execute("SELECT extversion FROM pg_extension WHERE extname = 'postgis';")
         res = cur.fetchone()
         if res:
-            print(f"[+] PostGIS extension is installed (v{res[0]}).")
+            print(f"[+] Extensión PostGIS instalada (v{res[0]}).")
         else:
-            print("[*] PostGIS extension not active yet. Migration will attempt activation.")
+            print("[*] Extensión PostGIS no activa aún. La migración intentará activarla.")
 
     # 1. Apply 001_initial_schema.sql
     schema_path = os.path.join(os.path.dirname(__file__), "..", "database", "migrations", "001_initial_schema.sql")
-    print(f"\n[*] Applying schema migration from: {schema_path}")
+    print(f"\n[*] Aplicando migración de esquema desde: {schema_path}")
     with open(schema_path, "r", encoding="utf-8") as f:
         schema_sql = f.read()
     
     with conn.cursor() as cur:
         cur.execute(schema_sql)
-    print("[+] Database tables and portable RLS policies created.")
+    print("[+] Tablas relacionales y políticas de RLS creadas exitosamente.")
 
     # 2. Apply 002_seed_swarm.sql
     seed_path = os.path.join(os.path.dirname(__file__), "..", "database", "migrations", "002_seed_swarm.sql")
-    print(f"[*] Applying seed data (6 Jocotoco reserves, 20 Pis) from: {seed_path}")
+    print(f"[*] Aplicando datos de semillado (6 reservas de Jocotoco, 20 monitores) desde: {seed_path}")
     with open(seed_path, "r", encoding="utf-8") as f:
         seed_sql = f.read()
         
     with conn.cursor() as cur:
         cur.execute(seed_sql)
-    print("[+] Reserves and devices seeded successfully.")
+    print("[+] Reservas y dispositivos semillados con éxito.")
 
     # 3. Synchronize generated Ed25519 public keys from data/devices.json
     devices_json_path = os.path.join(os.path.dirname(__file__), "..", "data", "devices.json")
     if os.path.exists(devices_json_path):
-        print(f"[*] Registering Ed25519 public keys from {devices_json_path}...")
+        print(f"[*] Registrando claves públicas Ed25519 desde {devices_json_path}...")
         with open(devices_json_path, "r", encoding="utf-8") as f:
             devices = json.load(f)
         with conn.cursor() as cur:
@@ -82,31 +82,31 @@ def run_migrations(db_url: str):
                     VALUES (%s, %s, TRUE)
                     ON CONFLICT DO NOTHING
                 """, (dev["id"], dev["public_key_hex"]))
-        print(f"[+] Registered Ed25519 cryptographic keys for {len(devices)} devices.")
+        print(f"[+] Registradas claves criptográficas Ed25519 para {len(devices)} dispositivos.")
 
     # 4. Verify Portable RLS (Row-Level Security)
-    print("\n[*] Validating Portable Multi-Tenant RLS Policy (ToR Test 2)...")
+    print("\n[*] Validando política portable de aislamiento multi-inquilino RLS (Prueba TdR 2)...")
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
         # Test A: Context set to Jocotoco Organization
         cur.execute("SET LOCAL app.current_tenant_id = 'a0000000-0000-0000-0000-000000000001';")
         cur.execute("SELECT COUNT(*) as count FROM devices;")
         count_joco = cur.fetchone()["count"]
-        print(f"    - Query with Jocotoco Tenant Context -> Devices visible: {count_joco} (Expected: 20)")
+        print(f"    - Consulta con contexto de Jocotoco       -> Dispositivos visibles: {count_joco} (Esperado: 20)")
 
         # Test B: Context set to an external unlinked tenant
         cur.execute("SET LOCAL app.current_tenant_id = 'e0000000-0000-0000-0000-000000000099';")
         cur.execute("SELECT COUNT(*) as count FROM devices;")
         count_alien = cur.fetchone()["count"]
-        print(f"    - Query with Foreign Tenant Context   -> Devices visible: {count_alien} (Expected: 0, Complete Isolation)")
+        print(f"    - Consulta con contexto de inquilino ajeno -> Dispositivos visibles: {count_alien} (Esperado: 0, Aislamiento Total)")
 
     conn.close()
-    print("\n[✓] SUPABASE SETUP AND VERIFICATION COMPLETE!")
+    print("\n[✓] ¡INICIALIZACIÓN Y VALIDACIÓN DE SUPABASE COMPLETADA CON ÉXITO!")
     return True
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Initialize Supabase database for Jocotoco PoC")
-    parser.add_argument("--db-url", type=str, default=os.getenv("DATABASE_URL"), help="Supabase PostgreSQL connection string")
+    parser = argparse.ArgumentParser(description="Inicializar base de datos Supabase para el PoC de Jocotoco")
+    parser.add_argument("--db-url", type=str, default=os.getenv("DATABASE_URL"), help="Cadena de conexión de Supabase PostgreSQL")
     args = parser.parse_args()
 
     if not args.db_url:
