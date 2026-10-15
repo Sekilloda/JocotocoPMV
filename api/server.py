@@ -1,7 +1,7 @@
 """
 Jocotoco Smart Bioacoustic Monitor API Server
 Provides high-performance ingestion, Ed25519 verification, OTA distribution,
-and an interactive operations dashboard.
+and fleet telemetry endpoints.
 """
 
 import os
@@ -9,17 +9,14 @@ import json
 import uuid
 import hashlib
 from datetime import datetime, timezone
-from flask import Flask, request, jsonify, render_template, send_from_directory, Response
+from flask import Flask, request, jsonify, send_from_directory, Response
 
 from api.auth import DeviceAuthenticator
 from database.client import DatabaseClient
 
 
-app = Flask(
-    __name__,
-    template_folder="../dashboard/templates",
-    static_folder="../dashboard/static"
-)
+app = Flask(__name__)
+
 
 DATA_DIR = os.getenv("DATA_DIR", "data")
 STORAGE_DIR = os.path.join(DATA_DIR, "storage")
@@ -227,7 +224,7 @@ def ota_manifest():
 
 @app.route("/api/v1/fleet", methods=["GET"])
 def get_fleet():
-    """Returns the list of 20 simulated Raspberry Pis for dashboard map and telemetry."""
+    """Returns the list of 20 simulated Raspberry Pis with status and coordinates."""
     reg_path = os.path.join(DATA_DIR, "devices.json")
     if os.path.exists(reg_path):
         with open(reg_path, "r", encoding="utf-8") as f:
@@ -253,9 +250,24 @@ def stream_audio(clip_id):
 
 
 @app.route("/", methods=["GET"])
-def dashboard():
-    """Renders the operations dashboard."""
-    return render_template("index.html")
+def root():
+    """API root providing service discovery and status."""
+    return jsonify({
+        "service": "jocotoco-smart-monitor-backend",
+        "status": "online",
+        "version": "1.0.0-poc",
+        "database": "postgresql" if db.is_postgres else "sqlite_local",
+        "endpoints": {
+            "health": "/healthz",
+            "fleet": "/api/v1/fleet",
+            "events": "/api/v1/events",
+            "ota_manifest": "/api/v1/ota/manifest",
+            "ingest_authorize": "/api/v1/ingest/authorize",
+            "ingest_complete": "/api/v1/ingest/complete",
+            "telemetry": "/api/v1/telemetry"
+        }
+    }), 200
+
 
 
 if __name__ == "__main__":

@@ -225,7 +225,7 @@ class DatabaseClient:
                 return True
 
     def get_recent_events(self, limit: int = 50) -> List[Dict[str, Any]]:
-        """Retrieves recent bioacoustic events for dashboard display."""
+        """Retrieves recent bioacoustic events."""
         if self.is_postgres:
             try:
                 conn = self.get_pg_connection()

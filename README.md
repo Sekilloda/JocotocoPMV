@@ -1,164 +1,174 @@
-# Jocotoco Smart Bioacoustic Monitor — Proof of Concept (PoC)
+# Monitor Inteligente de Bioacústica — Prueba de Concepto (PoC)
 
-[![Acceptance Tests](https://img.shields.io/badge/ToR%20Acceptance%20Tests-5%2F5%20Passed-10b981.svg)]()
-[![Hardware Emulation](https://img.shields.io/badge/Hardware-20%20x%20Raspberry%20Pi%205-blue.svg)]()
-[![Security](https://img.shields.io/badge/Security-Ed25519%20Per--Request%20Signatures-38bdf8.svg)]()
-[![Cloud Ready](https://img.shields.io/badge/Deployment-Railway%20%2B%20Supabase-7c3aed.svg)]()
-
-> **Institutional Reference:** Terms of Reference (ToR) — Comprehensive Platform for the Jocotoco Smart Bioacoustic Monitor  
-> **Client:** Fundación de Conservación Jocotoco  
-> **Repository:** Proof of Concept companion to the Technical & Financial Proposal
+> **Referencia:** Términos de Referencia (TdR) — Plataforma Integral para el Monitor Inteligente de Bioacústica  
+> **Organización Destinataria:** Fundación de Conservación Jocotoco 
 
 ---
 
-## 1. Executive Summary & Capabilities Demonstrated
+## 1. Resumen
+Esta Prueba de Concepto (PoC) implementa una maqueta con los pilares técnicos fundamentales requeridos para la plataforma institucional encargada de operar la red distribuida de monitores inteligentes de bioacústica. Estas son sus características:
 
-This Proof of Concept (PoC) provides a functioning, testable implementation of the core technical pillars defined in the Jocotoco proposal:
+1. **Enjambre simulado de 20 equipos de monitoreo:**
+   - 20 nodos de hardware independientes distribuidos geográficamente en 6 reservas ecológicas clave de Ecuador (*Buenaventura, Tapichalaca, Yanacocha, Canandé, Narupa y Antisanilla*).
+   - Generación de archivos de audio de 100 kB en formato PCM de 16 bits con pendiente espectral $1/f$ (comúnmente conocido como ruido rosa), que representan los archivos de audio asociados a eventos de detección.
+   - Buffer transaccional local en cada monitor, que aporta resiliencia a cortes de energía y ventanas prolongadas sin conectividad celular, sin pérdida de datos.
 
-1. **Simulated Swarm of 20 Raspberry Pi 5 Edge Monitors:**
-   - 20 distinct hardware nodes geographically distributed across 6 Jocotoco ecological reserves in Ecuador (*Buenaventura, Tapichalaca, Yanacocha, Canandé, Narupa, Antisanilla*).
-   - Generates authentic **100 kB (100,000 bytes) 16-bit PCM pink noise audio files** ($1/f$ spectral slope) modeling bioacoustic triggers.
-   - Transactional local **SQLite queue** per device simulating power cuts and network blackouts without data loss.
+2. **Identidad criptográfica asimétrica:**
+   - Parche que evita la limitación de terminación mTLS en balanceadores y proxies inversos comerciales mediante firmas digitales aplicadas directamente en la capa de aplicación sobre HTTPS estándar.
+   - Cabeceras de autenticación: `X-Device-Id`, `X-Timestamp` y `X-Signature` calculada sobre llave + llave SHA-256, con ventana estricta anti-repetición de 120 segundos.
 
-2. **Cryptographic Identity Tailored for Cloud Proxies (Ed25519):**
-   - Solves the cloud reverse-proxy mTLS-termination limitation by enforcing cryptographic signatures directly at the application layer over standard HTTPS.
-   - Headers: `X-Device-Id`, `X-Timestamp`, `X-Signature` over `SHA256(payload) + timestamp` with a strict 120-second anti-replay window.
+3. **Capa de datos:**
+   - Esquemas SQL versionados con políticas de Row-Level Security gobernadas por la variable de sesión `app.current_tenant_id`.
+   - Interfaz nativa y directa con Supabase PostgreSQL y extensiones espaciales PostGIS, con fallback automático a SQLite local para pruebas sin conexión.
 
-3. **Multi-Tenant Relational Data Layer (PostgreSQL / PostGIS):**
-   - Standard SQL migration scripts with portable Row-Level Security (RLS) driven by `app.current_tenant_id` session context.
-   - Direct turnkey interface with **Supabase PostgreSQL** and **PostGIS**.
+4. **Gestión de actualizaciones:**
+   - Servidor de manifiestos estructurados para distribución de modelos por bloques de 1 MB con persistencia de progreso y validación criptográfica SHA-256 por bloque y acumulada.
 
-4. **Resilient Over-The-Air (OTA) Management:**
-   - Chunked Range HTTP manifest server (`Range: bytes=X-Y` / HTTP 206) for interrupted network recovery and checksum validation.
-
-5. **Cloud Deployment Ready for Railway:**
-   - Containerized orchestration with multi-stage `Dockerfile`, `railway.json`, and `Procfile`.
-   - Integrated operations dashboard with interactive Leaflet map, audio playback, and live telemetry feeds.
+5. **Despliegue Contenerizado Listo para Railway:**
+   - Orquestación mediante `Dockerfile` multi-etapa, `railway.json` y `Procfile`.
+   - Panel de control operativo integrado con mapa satelital Leaflet, reproducción de audio bioacústico y telemetría de flota en tiempo real.
 
 ---
 
-## 2. Directory Layout
+## 2. Sistemas reales que simula la prueba de concepto
+
+El PoC modela los componentes físicos y operacionales de la red:
+
+* **Telemetría:**
+  - Voltaje y nivel de batería (10% a 100%), temperatura del procesador (°C), espacio ocupado en la tarjeta SD (%) y potencia de señal celular (RSSI en dBm).
+* **Audio Bioacústico Canónico de 100 kB:**
+  - Síntesis de ruido rosa con densidad espectral $1/f$ ($3\text{ dB/octava}$ de atenuación), simulando eventos de detección.
+* **Condiciones adversas:**
+  - Cortes de red forzados durante la sincronización, rechazo de cargas con firmas adulteradas y bloqueo de ataques de repetición con marcas temporales expiradas.
+
+---
+
+## 5. Diferencias con el piloto operativo
+
+Para evolucionar este demostrador funcional hacia el piloto operativo desplegado:
+
+1. Hace falta reescribir el agente de control en Rust y empaquetarlo en un daemon como servicio del sistema bajo `systemd` con reinicio automático.
+2. Es necesario integrar el sistema con hardware real.
+3. Diseño de la arquitectura de almacenamiento de datos en Cloudflare R2. Esto implica la configuración de buckets y emisión de URLs prefirmadas reales con expiración temporal.
+4. Esta prueba de concepto no incluye el dashboard. Para crearlo, es necesario diseñar la interfaz con control de acceso por roles, descarga y reproducción de archivos.
+5. Configuración del respaldo en NAS. Establecimiento de tareas programadas con `rclone` y respaldos cifrados de PostgreSQL hacia el almacenamiento físico de la institución.
+
+El backend simulado en este demostrador fue diseñado enteramente en Python.
+
+---
+
+## 6. Estructura del Repositorio
 
 ```
 smart-monitor-poc/
-├── README.md                      # Architecture and operational manual
-├── railway.json                   # Railway container deployment configuration
-├── Dockerfile                     # Multi-stage production container
-├── Procfile                       # PaaS process manager definition
-├── requirements.txt               # Lightweight runtime dependencies
-├── .env.example                   # Environment variable template
+├── README.md                      # Manual de arquitectura y operaciones (este documento)
+├── railway.json                   # Configuración para despliegue de contenedores en Railway
+├── Dockerfile                     # Imagen de producción multi-etapa
+├── Procfile                       # Definición de procesos para PaaS
+├── requirements.txt               # Dependencias ligeras de ejecución
+├── .env.example                   # Plantilla de variables de entorno
 ├── api/
-│   ├── server.py                  # Ingestion, storage, OTA, and dashboard server
-│   └── auth.py                    # Ed25519 signature verification middleware
+│   ├── server.py                  # Servidor de ingesta, almacenamiento y OTA
+│   └── auth.py                    # Middleware de verificación criptográfica Ed25519
 ├── simulator/
-│   ├── pink_noise.py              # Pure Python 100 kB pink noise WAV generator
-│   ├── device.py                  # Raspberry Pi 5 edge daemon simulator
-│   ├── swarm.py                   # Swarm manager (20 Pis across 6 reserves)
-│   ├── run_swarm.py               # CLI tool to burst simulate detection events
-│   └── sync_client.py             # Resumable edge-to-cloud synchronization
+│   ├── pink_noise.py              # Generador de ruido rosa WAV de 100 kB en Python
+│   ├── device.py                  # Simulador de daemon edge de Raspberry Pi 5
+│   ├── swarm.py                   # Gestor del enjambre
+│   ├── run_swarm.py               # Herramienta CLI para simular ráfagas de detecciones
+│   └── sync_client.py             # Cliente de sincronización reanudable edge-to-cloud
 ├── database/
-│   ├── client.py                  # Dual-mode database client (Supabase / SQLite)
+│   ├── client.py                  # Cliente de base de datos
 │   └── migrations/
-│       ├── 001_initial_schema.sql # DDL with PostGIS & Portable RLS
-│       └── 002_seed_swarm.sql     # Seed reserves and 20 devices with GPS
-├── dashboard/
-│   ├── templates/index.html       # Operations dashboard template
-│   └── static/
-│       ├── style.css              # Modern dark-theme UI stylesheet
-│       └── app.js                 # Leaflet map & audio playback logic
+│       ├── 001_initial_schema.sql # DDL relacional con PostGIS y RLS portable
+│       └── 002_seed_swarm.sql     # Semillado de 6 reservas y 20 dispositivos con GPS
 ├── scripts/
-│   ├── setup_supabase.py          # Turnkey Supabase migration and RLS validator
-│   └── test_acceptance.py         # Automated ToR Acceptance Test runner
+│   ├── setup_supabase.py          # Script de migración y validación de RLS en Supabase
+│   └── test_acceptance.py         # Suite automatizada de pruebas de aceptación de los TdR
 └── data/
-    ├── devices.json               # 20 Pis metadata & Ed25519 public keys
-    ├── audio_clips/               # Generated 100 kB audio files
-    └── sqlite_buffers/            # Local SQLite queues per device
+    ├── devices.json               # Metadatos de 20 Pis y claves públicas Ed25519
+    ├── audio_clips/               # Archivos de audio generados de 100 kB
+    └── sqlite_buffers/            # Colas locales SQLite individuales por dispositivo
 ```
 
 ---
 
-## 3. Quickstart Guide (Local Execution)
+## 7. Guía de Inicio Rápido (Ejecución Local)
 
-### Step 1: Install Dependencies
+### Paso 1: Instalación de Dependencias
 ```bash
 pip install -r requirements.txt
 ```
 
-### Step 2: Generate 100 kB Pink Noise Clips for the 20-Pi Swarm
+### Paso 2: Generar Clips de Ruido Rosa de 100 kB para el Enjambre
 ```bash
 python3 -m simulator.run_swarm --clips 1 --bytes 100000
 ```
-*Output: 20 exact 100,000-byte pink noise WAV clips (2.0 MB total) and 20 local SQLite buffers.*
+*Genera 20 clips de audio WAV de exactamente 100,000 bytes (2.0 MB en total) y 20 colas SQLite locales con sus claves criptográficas.*
 
-### Step 3: Run the Automated Acceptance Test Suite
+### Paso 3: Ejecutar la Suite Automatizada de Pruebas de Aceptación
 ```bash
 python3 scripts/test_acceptance.py
 ```
-*Verifies 100 kB audio size, Ed25519 signatures, tamper rejection, replay defense, SQLite state transitions, and idempotency (5/5 tests pass).*
+*Valida tamaño exacto de audio, verificación Ed25519, rechazo de alteraciones, defensa anti-repetición, transiciones en SQLite, idempotencia y manifiesto OTA (5/5 pruebas superadas).*
 
-### Step 4: Start the Platform API & Dashboard
+### Paso 4: Iniciar la API de Ingesta y Control
 ```bash
 python3 -m api.server
 ```
-Visit **`http://localhost:8000`** to view the interactive map of the 20 Pis across Ecuador, listen to the pink noise audio clips, and inspect telemetry!
+Consulte **`http://localhost:8000`** o **`http://localhost:8000/healthz`** para verificar el estado de los servicios y los endpoints disponibles de la API.
 
-### Step 5: Simulate Swarm Ingestion Sync
-In a separate terminal:
+
+### Paso 5: Simular la Sincronización del Enjambre
+En una terminal paralela:
 ```bash
 python3 simulator/sync_client.py http://127.0.0.1:8000
 ```
-*Uploads all queued clips, verifies Ed25519 signatures, and registers detections.*
+*Transmite las detecciones encoladas hacia el servidor, validando firmas Ed25519 y registrando los eventos de forma concurrente.*
 
 ---
 
-## 4. Interfacing with Supabase
+## 8. Conexión con Supabase
 
-The user has a Supabase organization set up. To link this PoC directly to Supabase:
+Para enlazar este PoC directamente con una instancia de Supabase PostgreSQL:
 
-### Method A: Automated CLI Setup
-1. In your Supabase dashboard, go to **Project Settings** $\longrightarrow$ **Database** $\longrightarrow$ **Connection String (URI)**.
-2. Run the migration script:
+### Método A: Configuración Automatizada por CLI
+1. En el panel de Supabase, ingrese a **Project Settings** $\longrightarrow$ **Database** $\longrightarrow$ **Connection String (URI)**.
+2. Ejecute el script de inicialización:
 ```bash
 python3 scripts/setup_supabase.py --db-url "postgresql://postgres:[PASSWORD]@db.[PROJECT_REF].supabase.co:5432/postgres"
 ```
-This script automatically:
-- Checks and enables the `postgis` extension.
-- Creates all relational tables and portable Row-Level Security policies.
-- Seeds the 6 Jocotoco reserves and 20 Raspberry Pis.
-- Uploads the generated Ed25519 public keys.
-- Executes two automated queries verifying multi-tenant isolation.
+El script realiza automáticamente:
+- Activación de la extensión espacial `postgis`.
+- Creación de tablas relacionales y políticas portables de *Row-Level Security* (RLS).
+- Inserción de las 6 reservas y los 20 monitores con coordenadas geográficas reales.
+- Registro de las claves públicas Ed25519 generadas.
+- Validación de aislamiento multi-inquilino mediante consultas de prueba.
 
-### Method B: Supabase SQL Editor (Copy-Paste)
-You can also run the SQL files directly in the Supabase web dashboard:
-1. Open `database/migrations/001_initial_schema.sql` and run it in the **SQL Editor**.
-2. Open `database/migrations/002_seed_swarm.sql` and run it in the **SQL Editor**.
-
----
-
-## 5. Interfacing with Railway
-
-To deploy this proof of concept to Railway with zero server maintenance:
-
-### Step 1: Initialize Railway Project
-1. Log into [Railway.app](https://railway.app).
-2. Click **New Project** $\longrightarrow$ **Deploy from GitHub repo** (or use the Railway CLI).
-
-### Step 2: Link Environment Variables
-In Railway Project Settings, add:
-- `DATABASE_URL`: Your Supabase connection string (use the Session Pooler URI on port `5432` or Transaction Pooler on `6543`).
-- `PORT`: `8000` (automatically injected by Railway).
-
-### Step 3: Deploy
-Railway will automatically detect `railway.json` and `Dockerfile`, build the image, run the build-time swarm generator, and expose the live HTTPS dashboard with automated health checks at `/healthz`.
+### Método B: Editor SQL de Supabase (Copia y Pega)
+1. Abra `database/migrations/001_initial_schema.sql` y ejecútelo en el **SQL Editor** de Supabase.
+2. Abra `database/migrations/002_seed_swarm.sql` y ejecútelo en el **SQL Editor** de Supabase.
 
 ---
 
-## 6. Mapping to the ToR Acceptance Tests
+## 9. Despliegue en Railway
 
-| Test | ToR Requirement | PoC Implementation & Validation |
+Para desplegar este demostrador en Railway sin administración de servidores:
+
+1. Inicie sesión en [Railway.app](https://railway.app).
+2. Seleccione **New Project** $\longrightarrow$ **Deploy from GitHub repo** (o utilice la CLI de Railway).
+3. En las variables de entorno del proyecto (*Variables*), configure:
+   - `DATABASE_URL`: Cadena de conexión de Supabase (utilizar URI del Session Pooler en el puerto `5432` o Transaction Pooler en el puerto `6543`).
+   - `PORT`: `8000` (inyectado automáticamente por Railway).
+4. Railway detectará automáticamente el archivo `railway.json` y el `Dockerfile`, construirá la imagen, generará el enjambre y expondrá el servicio bajo HTTPS público con chequeo de salud en `/healthz`.
+
+---
+
+## 10. Mapeo de Pruebas de Aceptación de los Términos de Referencia
+
+| # | Requisito de los TdR | Implementación y Validación en la Prueba de Concepto |
 | :---: | :--- | :--- |
-| **1** | **Ingestion Interruption & Resumption** | Edge monitors store events in local SQLite (`events_buffer`). If connection drops, clips remain queued and resume without data loss or duplicates (`simulator/device.py`, `scripts/test_acceptance.py`). |
-| **2** | **Multi-Tenant Isolation (RLS)** | Relational policies enforce `app.current_tenant_id` at the database engine level, verified in `scripts/setup_supabase.py`. |
-| **3** | **Resumable OTA Model Update** | Manifest delivers chunked byte boundaries and hashes (`/api/v1/ota/manifest`), validated in Acceptance Test 5. |
-| **4** | **Hardware / Crypto Authentication** | Asymmetric Ed25519 signing over `SHA256(payload) + timestamp` prevents replay attacks and bypasses TLS proxy termination issues (`api/auth.py`). |
-| **5** | **100 kB Bioacoustic Noise Standard** | Authentic $1/f$ pink noise WAV clips synthesized with exact 100,000-byte length and canonical 44-byte RIFF headers (`simulator/pink_noise.py`). |
+| **1** | **Interrupción y Reanudación de Ingesta** | Los monitores edge almacenan eventos en SQLite local (`events_buffer`). Si la conexión se interrumpe, los clips permanecen en cola y se reanudan sin pérdida de datos ni registros duplicados (`simulator/device.py`, `scripts/test_acceptance.py`). |
+| **2** | **Aislamiento Multi-Inquilino (RLS)** | Políticas relacionales gobernadas por `app.current_tenant_id` en el motor de base de datos, garantizando aislamiento estricto verificado en `scripts/setup_supabase.py`. |
+| **3** | **Actualización OTA Reanudable de Modelos** | Manifiesto estructurado con partición por bloques de 1 MB y hashes SHA-256 (`/api/v1/ota/manifest`), validado en la prueba de aceptación 5. |
+| **4** | **Autenticación Criptográfica de Hardware** | Firmas asimétricas Ed25519 sobre $\text{SHA-256}(\text{payload}) + \text{timestamp}$, con rechazo de alteraciones y defensa contra repetición (`api/auth.py`). |
+| **5** | **Estándar de Audio Bioacústico de 100 kB** | Clips WAV sintetizados con pendiente $1/f$ (ruido rosa) de exactamente 100,000 bytes y cabecera RIFF canónica de 44 bytes (`simulator/pink_noise.py`). |

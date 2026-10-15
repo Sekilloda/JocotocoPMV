@@ -7,7 +7,7 @@
     "longitude": -79.7611,
     "elevation_m": 880,
     "public_key_hex": "8ccfdd2f440b8e4999b60128712e86a11de92e008fb41725e642c1b54a252dd6",
-    "battery_pct": 81.0,
+    "battery_pct": 84.0,
     "status": "ACTIVE"
   },
   {
@@ -18,7 +18,7 @@
     "longitude": -79.758,
     "elevation_m": 1020,
     "public_key_hex": "54e7301916776472f1756995feac7c99b31591b206f8902dffd89d8a30ca51a3",
-    "battery_pct": 93.0,
+    "battery_pct": 90.0,
     "status": "ACTIVE"
   },
   {
@@ -29,7 +29,7 @@
     "longitude": -79.7645,
     "elevation_m": 910,
     "public_key_hex": "fc9abd24dfe47b0fe88242a40df682853248d6b5bb9fd851c970b781625e7058",
-    "battery_pct": 93.0,
+    "battery_pct": 94.0,
     "status": "ACTIVE"
   },
   {
@@ -40,7 +40,7 @@
     "longitude": -79.7562,
     "elevation_m": 940,
     "public_key_hex": "dea8ed9b80ef07fcd97aa29d46594ade1fbb1b7bc8584ea8fe48ac66b7c21750",
-    "battery_pct": 90.0,
+    "battery_pct": 84.0,
     "status": "ACTIVE"
   },
   {
@@ -51,7 +51,7 @@
     "longitude": -79.768,
     "elevation_m": 850,
     "public_key_hex": "1af35fc99575721ca65752b7654f8314948cd7c54b60683359ddbf87eec8195e",
-    "battery_pct": 86.0,
+    "battery_pct": 81.0,
     "status": "ACTIVE"
   },
   {
@@ -62,7 +62,7 @@
     "longitude": -79.1312,
     "elevation_m": 2450,
     "public_key_hex": "d52356ed08afa0f4ca579f86656a46e4ede3946638a19472b54cfc68a1e3ffd0",
-    "battery_pct": 82.0,
+    "battery_pct": 94.0,
     "status": "ACTIVE"
   },
   {
@@ -73,7 +73,7 @@
     "longitude": -79.129,
     "elevation_m": 2520,
     "public_key_hex": "874c7bc13536e320e615b19c0ea8725e3fa2d0d6df54a142dfcb9f72ddc37dad",
-    "battery_pct": 81.0,
+    "battery_pct": 85.0,
     "status": "ACTIVE"
   },
   {
@@ -84,7 +84,7 @@
     "longitude": -79.135,
     "elevation_m": 2600,
     "public_key_hex": "fdaad34ed174f42c647c4f66236255ac2b4f936dae313cb33b9b9c9d9daacd88",
-    "battery_pct": 84.0,
+    "battery_pct": 83.0,
     "status": "ACTIVE"
   },
   {
@@ -106,7 +106,7 @@
     "longitude": -78.5834,
     "elevation_m": 3450,
     "public_key_hex": "c3eae72c4fc1ef4bd8cfae0735ced76eb822fc14b44db0570d6065aef02af947",
-    "battery_pct": 84.0,
+    "battery_pct": 88.0,
     "status": "ACTIVE"
   },
   {
@@ -117,7 +117,7 @@
     "longitude": -78.581,
     "elevation_m": 3400,
     "public_key_hex": "52ac6d4303a7633f33f191823e04655833b4a349e4d047ecc68897a3e84a36eb",
-    "battery_pct": 90.0,
+    "battery_pct": 84.0,
     "status": "ACTIVE"
   },
   {
@@ -128,7 +128,7 @@
     "longitude": -78.586,
     "elevation_m": 3520,
     "public_key_hex": "ec702d681c0623f3736130dc990514e221987fb8149c256e52adb999d83222a0",
-    "battery_pct": 85.0,
+    "battery_pct": 91.0,
     "status": "ACTIVE"
   },
   {
@@ -139,7 +139,7 @@
     "longitude": -78.579,
     "elevation_m": 3320,
     "public_key_hex": "a477f6dd530f527c6aee025fe855f99428cb52a94766aea96d17095193b8afc7",
-    "battery_pct": 82.0,
+    "battery_pct": 90.0,
     "status": "ACTIVE"
   },
   {
@@ -150,7 +150,7 @@
     "longitude": -79.2152,
     "elevation_m": 320,
     "public_key_hex": "348c6199679f075c8a73bd80caf2793bef9afb266e60c9bae7adcf7ba7bc15f5",
-    "battery_pct": 90.0,
+    "battery_pct": 81.0,
     "status": "ACTIVE"
   },
   {
@@ -161,7 +161,7 @@
     "longitude": -79.211,
     "elevation_m": 280,
     "public_key_hex": "bf0cd59fdd5674059d83de1dec8ee14d1892a97b94e5643fd52a40b1f12de9db",
-    "battery_pct": 92.0,
+    "battery_pct": 88.0,
     "status": "ACTIVE"
   },
   {
@@ -172,7 +172,7 @@
     "longitude": -79.219,
     "elevation_m": 350,
     "public_key_hex": "a8cebeb314b9c0e3714b8764c3ceb014845f3a01fcd87ecfe0bed73201175674",
-    "battery_pct": 83.0,
+    "battery_pct": 80.0,
     "status": "ACTIVE"
   },
   {
@@ -183,7 +183,7 @@
     "longitude": -77.7492,
     "elevation_m": 1100,
     "public_key_hex": "a5102b91f391cdff21420e8d69ce6b231ccd01a675dfe8e145b9a044c05fb973",
-    "battery_pct": 93.0,
+    "battery_pct": 90.0,
     "status": "ACTIVE"
   },
   {
@@ -194,7 +194,7 @@
     "longitude": -77.746,
     "elevation_m": 1150,
     "public_key_hex": "5a93b299aa3ece306e9a09457550be26b9ad4fa13cacb3ef86fa2caf6b162215",
-    "battery_pct": 86.0,
+    "battery_pct": 81.0,
     "status": "ACTIVE"
   },
   {
@@ -216,7 +216,7 @@
     "longitude": -78.334,
     "elevation_m": 3790,
     "public_key_hex": "169a37175537b2fa4c6f5902c24a6d406e22c26ada81030781cda5918d09b579",
-    "battery_pct": 82.0,
+    "battery_pct": 88.0,
     "status": "ACTIVE"
   }
 ]
