@@ -9,16 +9,24 @@ import json
 import uuid
 import hashlib
 from datetime import datetime, timezone
-from flask import Flask, request, jsonify, send_from_directory, Response
+from flask import Flask, request, jsonify, render_template, send_from_directory, Response
 
 from api.auth import DeviceAuthenticator
 from database.client import DatabaseClient
 
 
-app = Flask(__name__)
-
-
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+DASHBOARD_TEMPLATES = os.path.join(REPO_ROOT, "dashboard", "templates")
+DASHBOARD_STATIC = os.path.join(REPO_ROOT, "dashboard", "static")
+
+app = Flask(
+    __name__,
+    template_folder=DASHBOARD_TEMPLATES,
+    static_folder=DASHBOARD_STATIC,
+    static_url_path="/static"
+)
+
+
 DATA_DIR = os.getenv("DATA_DIR", os.path.join(REPO_ROOT, "data"))
 if not os.path.isabs(DATA_DIR):
     DATA_DIR = os.path.abspath(os.path.join(REPO_ROOT, DATA_DIR))
@@ -252,22 +260,48 @@ def stream_audio(clip_id):
     return send_from_directory(STORAGE_DIR, filename, mimetype="audio/wav")
 
 
+@app.route("/dashboard", methods=["GET"])
+def dashboard():
+    """Renders the operations dashboard."""
+    return render_template("index.html")
+
+
+@app.route("/api/v1/simulate/burst", methods=["POST", "GET"])
+def simulate_burst():
+    """Generates new bioacoustic detections across the swarm and synchronizes them."""
+    from simulator.swarm import SwarmManager
+    from simulator.sync_client import sync_all_swarm
+    swarm = SwarmManager(data_dir=DATA_DIR)
+    events = swarm.generate_swarm_detections(clips_per_device=1)
+    port = int(os.getenv("PORT", 8000))
+    sync_all_swarm(f"http://127.0.0.1:{port}")
+    return jsonify({
+        "status": "success",
+        "message": f"Ráfaga simulada: {len(events)} detecciones generadas y sincronizadas",
+        "detections_count": len(events)
+    }), 200
+
+
 @app.route("/", methods=["GET"])
 def root():
-    """API root providing service discovery and status."""
+    """API root providing service discovery and status, or renders dashboard if requested by browser."""
+    if request.accept_mimetypes.best_match(["text/html", "application/json"]) == "text/html":
+        return render_template("index.html")
     return jsonify({
         "service": "jocotoco-smart-monitor-backend",
         "status": "online",
         "version": "1.0.0-poc",
         "database": "postgresql" if db.is_postgres else "sqlite_local",
         "endpoints": {
+            "dashboard": "/dashboard",
             "health": "/healthz",
             "fleet": "/api/v1/fleet",
             "events": "/api/v1/events",
             "ota_manifest": "/api/v1/ota/manifest",
             "ingest_authorize": "/api/v1/ingest/authorize",
             "ingest_complete": "/api/v1/ingest/complete",
-            "telemetry": "/api/v1/telemetry"
+            "telemetry": "/api/v1/telemetry",
+            "simulate_burst": "/api/v1/simulate/burst"
         }
     }), 200
 

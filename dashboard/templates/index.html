@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fundación Jocotoco — Plataforma de Monitoreo Bioacústico Inteligente</title>
+    <!-- Leaflet CSS & JS for OpenStreetMap display -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="app-header">
+        <div class="header-left">
+            <div class="logo-badge">🦜 JOCOTOCO</div>
+            <div>
+                <h1>Plataforma de Monitoreo Bioacústico Inteligente</h1>
+                <p class="subtitle">Red Distribuida de Monitores Raspberry Pi 5 — Proof of Concept</p>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="status-pill status-healthy">
+                <span class="status-dot"></span>
+                <span>Enjambre Activo: 20 Pis</span>
+            </div>
+            <div class="status-pill status-crypto">
+                <span>Ed25519 mTLS-Bypass: OK</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="dashboard-grid">
+        <!-- Top KPIs -->
+        <section class="kpi-row">
+            <div class="kpi-card">
+                <div class="kpi-label">Monitores Raspberry Pi 5</div>
+                <div class="kpi-value" id="kpi-devices">20 / 20</div>
+                <div class="kpi-sub">6 Reservas Ecológicas en Ecuador</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Audio Capturado (Pink Noise)</div>
+                <div class="kpi-value" id="kpi-audio">100 kB <span class="unit">/ clip</span></div>
+                <div class="kpi-sub">Simulación 1/f espectro bioacústico</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Seguridad Asimétrica</div>
+                <div class="kpi-value">Ed25519</div>
+                <div class="kpi-sub">Firmas criptográficas por petición</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Orquestación & Persistencia</div>
+                <div class="kpi-value" id="kpi-db">Postgres / PostGIS</div>
+                <div class="kpi-sub">Compatible con Railway + Supabase</div>
+            </div>
+        </section>
+
+        <!-- Main Content Area: Map and Fleet -->
+        <div class="content-row">
+            <!-- Leaflet Map Container -->
+            <section class="panel map-panel">
+                <div class="panel-header">
+                    <h2>📍 Mapa de Despliegue en Reservas Jocotoco</h2>
+                    <span class="badge">Ecuador (UTM / WGS84)</span>
+                </div>
+                <div id="map" style="height: 480px; width: 100%; border-radius: 8px;"></div>
+                <div class="map-legend">
+                    <span class="legend-item"><span class="legend-color res-buenaventura"></span> Buenaventura (El Oro)</span>
+                    <span class="legend-item"><span class="legend-color res-tapichalaca"></span> Tapichalaca (Zamora)</span>
+                    <span class="legend-item"><span class="legend-color res-yanacocha"></span> Yanacocha (Pichincha)</span>
+                    <span class="legend-item"><span class="legend-color res-canande"></span> Canandé (Esmeraldas)</span>
+                    <span class="legend-item"><span class="legend-color res-narupa"></span> Narupa (Napo)</span>
+                    <span class="legend-item"><span class="legend-color res-antisanilla"></span> Antisanilla (Antisana)</span>
+                </div>
+            </section>
+
+            <!-- Device Fleet Health -->
+            <section class="panel fleet-panel">
+                <div class="panel-header">
+                    <h2>⚡ Estado del Enjambre (20 Dispositivos)</h2>
+                    <button class="btn btn-secondary btn-sm" onclick="triggerSwarmTelemetry()">Actualizar Vitals</button>
+                </div>
+                <div class="fleet-list-container">
+                    <table class="data-table" id="fleet-table">
+                        <thead>
+                            <tr>
+                                <th>ID Dispositivo</th>
+                                <th>Reserva</th>
+                                <th>Batería</th>
+                                <th>CPU °C</th>
+                                <th>Clave Ed25519</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fleet-tbody">
+                            <!-- Populated via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+
+        <!-- Bioacoustic Detection Feed & Audio Player -->
+        <section class="panel events-panel">
+            <div class="panel-header">
+                <div>
+                    <h2>🎯 Detecciones Bioacústicas & Reproducción de Audio (100 kB Pink Noise)</h2>
+                    <p class="panel-desc">Clips generados con ruido rosa espectral estandarizado (100.000 bytes) y metadatos de clasificación.</p>
+                </div>
+                <div class="panel-actions">
+                    <button class="btn btn-primary" onclick="triggerDetectionBurst()">⚡ Simular Ráfaga de Detección</button>
+                    <button class="btn btn-outline" onclick="testCryptoTampering()">🛡️ Probar Integridad Ed25519</button>
+                    <button class="btn btn-outline" onclick="showOtaModal()">📦 Manifiesto OTA</button>
+                </div>
+            </div>
+
+            <div class="events-container">
+                <div id="events-list" class="events-grid">
+                    <!-- Event cards populated dynamically -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal for OTA Manifest -->
+    <div id="ota-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📦 Manifiesto de Actualización OTA Resiliente (Range HTTP 206)</h3>
+                <button class="close-btn" onclick="closeOtaModal()">&times;</button>
+            </div>
+            <pre id="ota-manifest-code"></pre>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

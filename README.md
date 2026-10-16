@@ -28,6 +28,13 @@ Esta Prueba de Concepto (PoC) implementa una maqueta con los pilares técnicos f
    - Orquestación mediante `Dockerfile` multi-etapa, `railway.json` y `Procfile`.
    - Endpoint raíz de estado y descubrimiento de servicios JSON (`/`), chequeo de salud en `/healthz` y telemetría de flota en tiempo real.
 
+6. **Consola Interactiva de Operaciones (Dashboard Web):**
+   - Interfaz web interactiva construida en HTML5, CSS3, Leaflet.js y Web Audio API.
+   - Mapa geoespacial de Ecuador con los 20 monitores distribuidos en las 6 reservas de Jocotoco.
+   - Tabla de estado de la flota con telemetría en tiempo real y claves públicas Ed25519 de cada nodo.
+   - Visor de detecciones bioacústicas con reproductor de audio integrado para escuchar los clips canónicos de 100 kB.
+   - Modal interactivo para inspeccionar el manifiesto de actualización OTA por bloques de 1 MB.
+
 ---
 
 ## 2. Sistemas reales que simula la prueba de concepto
@@ -50,7 +57,7 @@ Para evolucionar este demostrador funcional hacia el piloto operativo desplegado
 1. Hace falta reescribir el agente de control en Rust y empaquetarlo en un daemon como servicio del sistema bajo `systemd` con reinicio automático.
 2. Es necesario integrar el sistema con hardware real.
 3. Diseño de la arquitectura de almacenamiento de datos en Cloudflare R2. Esto implica la configuración de buckets y emisión de URLs prefirmadas reales con expiración temporal.
-4. Esta prueba de concepto no incluye el dashboard. Para crearlo, es necesario diseñar la interfaz con control de acceso por roles, visualización de espectrogramas acústicos, descarga y reproducción de archivos.
+4. Para el piloto operativo, la consola interactiva se evolucionará a un dashboard corporativo en Next.js/React con control de acceso por roles (RBAC), visor de espectrogramas acústicos FFT interactivos, gestión de usuarios institucionales y descarga masiva de auditoría.
 5. Configuración del respaldo en NAS. Establecimiento de tareas programadas con `rclone` y respaldos cifrados de PostgreSQL hacia el almacenamiento físico de la institución.
 
 El backend simulado en este demostrador fue diseñado enteramente en Python.
@@ -68,8 +75,14 @@ smart-monitor-poc/
 ├── requirements.txt               # Dependencias ligeras de ejecución
 ├── .env.example                   # Plantilla de variables de entorno
 ├── api/
-│   ├── server.py                  # Servidor de ingesta, almacenamiento, OTA y endpoints de flota
+│   ├── server.py                  # Servidor de ingesta, almacenamiento, OTA, dashboard y endpoints de flota
 │   └── auth.py                    # Middleware de verificación criptográfica Ed25519
+├── dashboard/
+│   ├── templates/
+│   │   └── index.html             # Interfaz web de la consola interactiva de operaciones
+│   └── static/
+│       ├── app.js                 # Lógica interactiva, mapa Leaflet y reproductor de audio
+│       └── style.css              # Estilos visuales dark mode
 ├── simulator/
 │   ├── pink_noise.py              # Generador de ruido rosa WAV de 100 kB en Python
 │   ├── device.py                  # Simulador de daemon edge de Raspberry Pi 5
@@ -82,7 +95,8 @@ smart-monitor-poc/
 │       ├── 001_initial_schema.sql # DDL relacional con PostGIS y RLS portable
 │       └── 002_seed_swarm.sql     # Semillado de 6 reservas y 20 dispositivos con GPS
 ├── docs/
-│   └── Explicativo_PoC_Fundacion_Jocotoco.md # Memoria técnica explicativa integral de arquitectura
+│   ├── Explicativo_PoC_Fundacion_Jocotoco.md # Memoria técnica explicativa integral de arquitectura
+│   └── screenshots/               # Capturas de pantalla anotadas de la validación operativa
 ├── scripts/
 │   ├── setup_supabase.py          # Script de migración y validación de RLS en Supabase
 │   └── test_acceptance.py         # Suite automatizada de pruebas de aceptación de los TdR
@@ -113,11 +127,11 @@ python3 scripts/test_acceptance.py
 ```
 *Valida tamaño de audio (por ahora exacto, para el piloto será un check con una cota mínima), verificación Ed25519, rechazo de alteraciones, defensa anti-repetición, transiciones en SQLite, idempotencia y manifiesto OTA.*
 
-### Paso 4: Iniciar la API
+### Paso 4: Iniciar la API y Consola de Operaciones
 ```bash
 python3 -m api.server
 ```
-Abra en su navegador **`http://localhost:8000`** para verificar el estado de los servicios.
+Abra en su navegador **`http://localhost:8000`** o **`http://localhost:8000/dashboard`** para interactuar con la consola de operaciones, el mapa de despliegue en Ecuador y los clips de audio bioacústico.
 
 ### Paso 5: Simular la sincronización del enjambre
 En una terminal paralela:
@@ -156,3 +170,15 @@ Para desplegar este demostrador en Railway sin administración de servidores:
    - `DATABASE_URL`: Cadena de conexión de Supabase (utilizar URI del Session Pooler en el puerto `5432` o Transaction Pooler en el puerto `6543`).
    - `PORT`: `8000` (inyectado automáticamente por Railway).
 4. Railway detectará automáticamente el archivo `railway.json` y el `Dockerfile`, construirá la imagen, generará el enjambre y expondrá el servicio bajo HTTPS público con chequeo de salud en `/healthz`.
+
+---
+
+## 8. Evidencia Visual y Capturas Anotadas de la Validación
+
+El directorio [`docs/screenshots/`](docs/screenshots/) contiene capturas de pantalla en alta resolución con anotaciones técnicas vinculadas directamente a los Términos de Referencia (TdR):
+
+1. **[`01_dashboard_fleet_map_annotated.png`](docs/screenshots/01_dashboard_fleet_map_annotated.png):** Consola general de operaciones, mapa Leaflet con los 20 monitores en 6 reservas ecológicas y tabla de telemetría con claves públicas Ed25519.
+2. **[`02_bioacoustic_audio_events_annotated.png`](docs/screenshots/02_bioacoustic_audio_events_annotated.png):** Panel de eventos bioacústicos con inferencia de especies diana, reproductor HTML5 de clips de 100 kB e idempotencia.
+3. **[`03_ota_resilient_manifest_annotated.png`](docs/screenshots/03_ota_resilient_manifest_annotated.png):** Manifiesto estructurado de actualización OTA segmentado en bloques de 1 MB (HTTP Range 206) con checksums SHA-256 por bloque y hash maestro institucional.
+4. **[`04_map_device_detail_annotated.png`](docs/screenshots/04_map_device_detail_annotated.png):** Inspección detallada del nodo edge en la Reserva Buenaventura, cota altitudinal (880 m.s.n.m.) y huella criptográfica activa.
+5. **[`05_cli_acceptance_tests_annotated.png`](docs/screenshots/05_cli_acceptance_tests_annotated.png):** Ejecución de la suite automatizada de pruebas con 100% de éxito (5/5 pruebas superadas) y sincronización concurrente del enjambre hacia la nube.

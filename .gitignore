@@ -21,5 +21,6 @@ data/storage/*.wav
 !data/storage/.gitkeep
 data/sqlite_buffers/*.sqlite
 !data/sqlite_buffers/.gitkeep
+data/audio_clips/**/*.wav
 data/central_platform.db
 data/central_platform.db-journal
